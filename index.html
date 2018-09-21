@@ -9,10 +9,26 @@
 
 <body>
     <div id="app">
-        <svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-            xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-            xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" ref="svg" width="280px" height="280px" viewBox="0 0 511.99998 511.99998"
-            id="svg2" version="1.1" inkscape:version="0.91 r13725" sodipodi:docname="theoldmoon0602.svg">
+        <div>
+            <span style="display: inline-block; width: 200px;">hue:{{hue}}</span><input type="range" max="360" min="0"
+                v-model="hue"> <br>
+            <span style="display: inline-block; width: 200px;">sat:{{sx}}</span><input type="range" max="2" min="0"
+                step="0.001" v-model="sx"> <br>
+            <span style="display: inline-block; width: 200px;">light:{{sl}}</span><input type="range" max="2" min="0"
+                step="0.001" v-model="sl"> <br>
+            <span style="display: inline-block; width: 200px;">size:{{imgSize}}</span><input type="range" max="1024"
+                min="128" step="1" v-model="imgSize"> <br>
+
+        </div>
+        <div>
+            <a href="#" @click="download">download</a> <br>
+            <a href="#" @click="downloadAsPNG">download as png</a>
+        </div>
+        <svg ref="svg" :width="imgSize + 'px'" :height="imgSize+'px'" xmlns:dc="http://purl.org/dc/elements/1.1/"
+            xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg"
+            xmlns="http://www.w3.org/2000/svg" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+            xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" viewBox="0 0 511.99998 511.99998" id="svg2"
+            version="1.1" inkscape:version="0.91 r13725" sodipodi:docname="theoldmoon0602.svg">
             <defs id="defs4" />
             <sodipodi:namedview id="base" pagecolor="#ffffff" bordercolor="#666666" borderopacity="1"
                 inkscape:pageopacity="0.0" inkscape:pageshadow="2" inkscape:zoom="1.4" inkscape:cx="411.75251"
@@ -49,21 +65,12 @@
             </g>
         </svg>
 
-        <div>
-            <span style="display: inline-block; width: 200px;">hue:{{hue}}</span><input type="range" max="360" min="0"
-                v-model="hue"> <br>
-            <span style="display: inline-block; width: 200px;">sat:{{sx}}</span><input type="range" max="2" min="0"
-                step="0.001" v-model="sx"> <br>
-            <span style="display: inline-block; width: 200px;">light:{{sl}}</span><input type="range" max="2" min="0"
-                step="0.001" v-model="sl"> <br>
-        </div>
 
-        <div>
-            <a href="#" @click="download">download</a>
-        </div>
+
 
         <a href="#" style="display: hidden;" ref="dl" download="theoldmoon0602.svg"></a>
 
+        <canvas id="canvas" :width="imgSize" :height="imgSize" style="position: fixed; top: 99999px;"></canvas>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     <script>
@@ -98,22 +105,43 @@
             let rgb = toRGB(h, s, l);
             return 'fill: rgb(' + rgb[0] + ', ' + rgb[1] + ',' + rgb[2] + ');';
         };
-        new Vue({
+        let vue = new Vue({
             el: '#app',
             data: {
                 hue: 182,
                 sx: 1.0,
-                sl: 1.0
+                sl: 1.0,
+                imgSize: 128,
             },
             methods: {
-                download() {
+                downloadImageAs(dataURL, name) {
+                    this.$refs.dl.href = dataURL;
+                    this.$refs.dl.download = name;
+                    this.$refs.dl.click();
+                },
+                getSVGURL() {
                     let serializer = new XMLSerializer();
                     let svg = serializer.serializeToString(this.$refs.svg);
                     let blob = new Blob([svg], { type: 'image/svg+xml' });
                     let url = window.URL.createObjectURL(blob);
-                    this.$refs.dl.href = url;
-                    this.$refs.dl.click();
+                    return url;
                 },
+                download() {
+                    this.downloadImageAs(this.getSVGURL(), 'theoldmoon0602.svg');
+                },
+                downloadAsPNG() {
+                    let canvas = document.getElementById('canvas');
+                    let ctx = canvas.getContext('2d');
+                    let img = new Image();
+                    let url = this.getSVGURL();
+
+                    img.onload = () => {
+                        ctx.drawImage(img, 0, 0, this.imgSize, this.imgSize);
+                        URL.revokeObjectURL(url);
+                        this.downloadImageAs(canvas.toDataURL(), 'theoldmoon0602.png');
+                    };
+                    img.src = url;;
+                }
             },
             computed: {
                 c1() { return HSL(this.hue, 77 * this.sx, 80 * this.sl); },
