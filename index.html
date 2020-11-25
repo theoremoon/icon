@@ -19,6 +19,7 @@
             <span style="display: inline-block; width: 200px;">size:{{imgSize}}</span><input type="range" max="1024"
                 min="128" step="1" v-model="imgSize"> <br>
 
+            <button @click="randomColor()">Random</button> <br>
         </div>
         <div>
             <a href="#" @click="download">download</a> <br>
@@ -66,15 +67,12 @@
         </svg>
 
 
-
-
         <a href="#" style="display: hidden;" ref="dl" download="theoldmoon0602.svg"></a>
 
         <canvas id="canvas" :width="imgSize" :height="imgSize" style="position: fixed; top: 99999px;"></canvas>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     <script>
-
         // from: https://www.w3schools.com/lib/w3color.js
         function toRGB(h, s, l) {
             s = s / 100;
@@ -107,13 +105,20 @@
         };
         let vue = new Vue({
             el: '#app',
-            data: {
-                hue: 182,
-                sx: 1.0,
-                sl: 1.0,
-                imgSize: 128,
+            data() {
+                return {
+                    hue: 182,
+                    sx: 1.0,
+                    sl: 1.0,
+                    imgSize: 128,
+                }
             },
             methods: {
+                randomColor() {
+                    this.hue = Math.round(Math.random() * 360);
+                    this.sx = Math.random() * 2;
+                    this.sl = Math.random() * 2;
+                },
                 downloadImageAs(dataURL, name) {
                     this.$refs.dl.href = dataURL;
                     this.$refs.dl.download = name;
